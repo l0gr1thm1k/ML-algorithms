@@ -7,7 +7,7 @@ Created on Thu May 25 09:13:44 2017
 
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 
 def preprocess(fname):
     """
@@ -26,6 +26,10 @@ def preprocess(fname):
     
     encoder = OneHotEncoder()
     X = encoder.fit_transform(X).toarray()
+    
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+    
     ones = np.ones(X.shape[0])
     ones = ones.reshape(-1, 1)
     X = np.append(ones, X, axis=1)

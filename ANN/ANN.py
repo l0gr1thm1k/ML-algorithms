@@ -5,6 +5,7 @@ Created on Thu May 25 08:39:34 2017
 @author: Daniel
 """
 
+import pandas as pd
 import numpy as np
 import random
 import network_architecture as na
@@ -25,16 +26,18 @@ def sigmoid(x, theta):
 
 def initialize_weights(n):
     """
-    @desc   - initialize a weight vector of n elements
+    @desc   - initialize a weight vector of n elements. Could initialize the 
+              weights to be:
+                  
+                  (-1/sqrt(n), 1/sqrt(n))
+           
     @param  - n: an integer defining the length of the weight vector
     @return - theta: a vector of random weight values
     """
-    sign_changes = np.random.choice(n)
-    indicies = np.random.choice([i for i in range(n)], sign_changes, replace=False)
-    theta = [random.random() for i in range(n)]
-    for i in indicies:
-        theta[i] = -1 * theta[i]
-    # theta = [np.random.choice(n) * np.sqrt(2.0/n) for i in range(n)]
+    low = -(1 / np.sqrt(n))
+    high = (1 / np.sqrt(n))
+    theta = [random.uniform(low, high) for i in range(n)]
+    # theta = [0 for i in range(n)]
     return theta
    
     
@@ -52,22 +55,24 @@ def create_network():
     network.layers.append(input_layer)        
 
     # make a hidden layer
-    hidden_layer = na.Layer()
-    hidden_layer.nodes = [] 
-    for i in range(5):
-        node = na.Node()
-        node.weights = initialize_weights(len(network.layers[-1].nodes))
-        hidden_layer.nodes.append(node)
-    network.layers.append(hidden_layer)
- 
+    for h in range(1):
+        hidden_layer = na.Layer()
+        hidden_layer.nodes = [] 
+        for i in range(5):
+            node = na.Node()
+            node.weights = initialize_weights(len(network.layers[-1].nodes))
+            hidden_layer.nodes.append(node)
+        network.layers.append(hidden_layer)
+
     # make an output layer
     output_layer = na.Layer()
     output_layer.nodes = []
+    # for i in range(2):
     node = na.Node()
     node.weights = initialize_weights(len(network.layers[-1].nodes))
     output_layer.nodes.append(node)
     network.layers.append(output_layer)
-    
+
     return network
 
 
@@ -78,19 +83,25 @@ if __name__ == '__main__':
 
     # calculate output for each training example
     
+    first_run = False
     for training_example in X:
         x = training_example
         n = len(x)
+
         for layer in network.layers:
             new_x = []
             for node in layer.nodes:
                 activation = sigmoid(x, node.weights)
                 new_x.append(sigmoid(x, node.weights))
+            if first_run is True:
+                print("This layer received %d inputs" % len(x))
             x = new_x
+        first_run = False
             
         # only one output in the output layer
-        prediction = x[0]
+        prediction = x # [0]
         print(prediction)
+    '''
         if prediction >= 0.5:
             y_pred.append(1)
         else:
@@ -102,3 +113,5 @@ if __name__ == '__main__':
             accuracy += 1
     accuracy = accuracy / len(y)
     print(accuracy)
+    y_pred = pd.Series(y_pred)
+    '''
