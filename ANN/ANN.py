@@ -55,7 +55,7 @@ def create_network():
     network.layers.append(input_layer)        
 
     # make a hidden layer
-    for h in range(1):
+    for h in range(0):
         hidden_layer = na.Layer()
         hidden_layer.nodes = [] 
         for i in range(5):
@@ -76,42 +76,39 @@ def create_network():
     return network
 
 
+def predict(network, training_example):
+    """
+    @desc   - feed information forward through the network and make a prediction
+    @param  - network: the network defined
+    @param  - training_example: an input instance to the network
+    @return - activation: a float representing the prediction of the netowrk
+              over this particular example.
+    """
+    x = training_example
+    for layer in network.layers:
+        new_x = []
+        for node in layer.nodes:
+            activation = sigmoid(x, node.weights)
+            new_x.append(activation)
+        x = new_x
+    return activation
+
+
+def cross_entropy(y_pred, y):
+    """
+    @desc   - calculate the error of the model using cross-entropy. 
+    @param  - y_pred: the vector of predicted outputs
+    @param  - y: the vector of correct outputs
+    @return - loss: a float representing the loss in the model
+    """       
+    pass
+ 
 if __name__ == '__main__':
     X, y = preprocess('tennis.csv')
     y_pred = []
     network = create_network()       
 
     # calculate output for each training example
-    
-    first_run = False
     for training_example in X:
-        x = training_example
-        n = len(x)
-
-        for layer in network.layers:
-            new_x = []
-            for node in layer.nodes:
-                activation = sigmoid(x, node.weights)
-                new_x.append(sigmoid(x, node.weights))
-            if first_run is True:
-                print("This layer received %d inputs" % len(x))
-            x = new_x
-        first_run = False
-            
-        # only one output in the output layer
-        prediction = x # [0]
-        print(prediction)
-    '''
-        if prediction >= 0.5:
-            y_pred.append(1)
-        else:
-            y_pred.append(0)
-        
-    accuracy = 0
-    for i, j in zip(y, y_pred):
-        if i == j:
-            accuracy += 1
-    accuracy = accuracy / len(y)
-    print(accuracy)
-    y_pred = pd.Series(y_pred)
-    '''
+        print(predict(network, training_example))
+    np.exp()
