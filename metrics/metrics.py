@@ -96,3 +96,37 @@ def root_mean_squared_error(actual, predicted):
     """
     return np.sqrt(mean_squared_error(actual, predicted))
 
+
+def squared_log_error(actual, predicted):
+    """
+    Calculate the squared errors of the natural logarithms of values over sets of actual and predicted data points.
+
+    :param actual: a vector or matrix of gold standard values.
+    :param predicted: a vector or matrix of predicted values.
+    :return: a vector or matrix of squared errors of the natural logarithms of the values.
+    """
+    # the +1 scales the vector by 1
+    return (np.log(np.array(actual) + 1) - np.log(np.array(predicted) + 1)) ** 2
+
+
+def mean_squared_log_error(actual, predicted):
+    """
+    Calculate the average of the squared log errors of values.
+
+    :param actual: a vector or matrix of predicted values.
+    :param predicted: a vector or matrix of gold standard values.
+    :return: the average of squared log errors, a float value.
+    """
+    return np.mean(squared_log_error(actual, predicted))
+
+
+def root_mean_squared_log_error(actual, predicted):
+    """
+    Get the square root of the average of squared log errors.
+
+    :param actual: a vector or matrix of gold standard values.
+    :param predicted: a vector or matrix of predicted values.
+    :return: a float representing the square root of the mean of squared log errors.
+    """
+    return np.sqrt(root_mean_squared_log_error(actual, predicted))
+
