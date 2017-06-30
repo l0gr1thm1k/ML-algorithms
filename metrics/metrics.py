@@ -130,3 +130,60 @@ def root_mean_squared_log_error(actual, predicted):
     """
     return np.sqrt(root_mean_squared_log_error(actual, predicted))
 
+
+def log_loss(actual, predicted):
+    """
+    Calculate the logarithm of the loss between actual and predicted values. Having smaller values of loss means
+
+    :param actual: a vector or matrix of predicted values.
+    :param predicted: a vector or matrix of gold standard values.
+    :return: a float representing the logarithmic loss of the data.
+    """
+    predicted = np.clip(predicted, EPS, 1 - EPS)
+    loss = -np.sum(actual * np.log(predicted) +
+                   (1 - actual) * (1 - np.log(predicted)))
+    return loss / float(actual.shape[0])
+
+
+def hinge_loss(actual, predicted):
+    """
+    Calculate the hinge loss of a series of values. Hinge loss is a loss function used for  training classifiers. The
+    hinge loss is used for "maximum-margin" classification, most notably for support vector machines.
+
+    :param Iterable actual: va vector or matrix of gold standard values.
+    :param predicted: a vector or matrix of predicted values.
+    :return: A float value, being the maximum of 0 or the loss of the values.
+    """
+    return np.mean(np.max(0.0, 1.0 - actual * predicted))
+
+
+def binary_cross_entropy(actual, predicted):
+    """
+    A special case of cross entropy.
+
+    :param actual: a vector or matrix of gold standard values.
+    :param predicted: a vector or matrix of predicted values.
+    :return: mean of the log loss of values over actual and predicted.
+    """
+    predicted = np.clip(predicted, EPS, 1 - EPS)
+    return np.mean(-np.sum(actual * np.log(predicted) +
+                           (1 - actual) * np.log(1 - predicted)))
+
+# aliases
+mse = mean_squared_error
+mae = mean_absolute_error
+rmse = root_mean_squared_error
+
+
+def get_metric(function):
+    """
+    Return metric function by name.
+
+    :param function: a string representing a function name to return
+    :return: return a metrics function.
+    :raises ValueError: when the function is not in globals()
+    """
+    try:
+        return globals()[function]
+    except:
+        raise ValueError("Invalid metric function.")
