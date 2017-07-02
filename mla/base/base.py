@@ -24,7 +24,7 @@ class BaseEstimator(object):
         if x.ndim == 1:
             self.n_samples, self.n_features = 1, x.shape
         else:
-            self.n_samples, self.n_feaures = x.shape[0], np.prod(x.shape[1:])
+            self.n_samples, self.n_features = x.shape[0], np.prod(x.shape[1:])
 
         self.x = x
 
