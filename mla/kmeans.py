@@ -1,12 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import random
-import seaborn
+import seaborn as sns
 
 from mla.base.base import BaseEstimator
 from mla.metrics.distance import euclidean_distance
 
-np.randomseed(1111)
+random.seed(1111)
 
 
 class KMeans(BaseEstimator):
@@ -35,7 +35,7 @@ class KMeans(BaseEstimator):
         self.centroids = []
         self.init = init
 
-    def initialize_centroids(self, init):
+    def _initialize_centroids(self, init):
         """Initialize the centroids"""
         if init == 'random':
             self.centroids = [self.x[y] for y in
@@ -47,5 +47,92 @@ class KMeans(BaseEstimator):
         else:
             raise ValueError('Unknown init parameter: %s' % init)
 
+    def _predict(self, x=None):
+        """Perform clustering on the data set"""
+        self._initialize_centroids(self.init)
+        centroids = self.centroids
+
+        # optimize clusters
+        for _ in range(self.max_iters):
+            self._assign(centroids)
+            centroids_old = centroids
+            centroids = [self._get_centroid(cluster) for cluster in self.clusters]
+
+            if self._is_converged(centroids_old, centroids):
+                break
+
+        self.centroids = centroids
+
+        return self._get_predictions()
+
+    def _get_predictions(self):
+        predictions = np.empty(self.n_samples)
+
+        for i, cluster in enumerate(self.clusters):
+            for index in cluster:
+                predictions[index] = i
+
+        return predictions
+
+    def _assign(self, centroids):
+
+        for row in range(self.n_samples):
+            for i, cluster in enumerate(self.clusters):
+                if row in cluster:
+                    self.clusters[i].remove(row)
+                    break
+
+            closest = self._closest(row, centroids)
+            self.clusters[closest].append(row)
+
+    def _closest(self, fpoint, centroids):
+        """Find the closest centroid for a point"""
+        closest_index = None
+        closest_distance = None
+        for i, point in enumerate(centroids):
+            dist = euclidean_distance(self.x[fpoint], point)
+            if closest_index is None or dist < closest_distance:
+                closest_index = i
+                closest_distance = dist
+        return closest_index
+
+    def _get_centroid(self, cluster):
+        """Get value by indices and take the mean"""
+        return [np.mean(np.take(self.x[:, i], cluster)) for i in range(self.n_features)]
+
+    def _distance_from_centers(self):
+        """Calculate distance from centers."""
+        return np.array([min([euclidean_distance(x, c) for c in self.centroids]) for x in self.x])
+
     def _choose_next_center(self):
-        pass
+        distances = self._distance_from_centers()
+        probs = distances / distances.sum()
+        cumprobs = probs.cumsum()
+        r = random.random()
+        ind = np.where(cumprobs >= r)[0][0]
+        return self.x[ind]
+
+    def _is_converged(self, centroids_old, centroids):
+        """Check if the distance between old and new centroids is zero"""
+        distance = 0
+        for i in range(self.k):
+            distance += euclidean_distance(centroids_old[i], centroids[i])
+        return distance == 0.0
+
+    def plot(self, ax=None, holdon=None):
+        sns.set(style='white')
+
+        data = self.x
+
+        if ax is None:
+            _, ax = plt.subplots()
+
+        for i, index in enumerate(self.clusters):
+            point = np.array(data[index]).T
+            ax.scatter(*point, c=sns.color_palette("hls", self.k + 1)[i])
+
+        for point in self.centroids:
+            ax.scatter(*point, marker='x', linewidths=10)
+
+        if not holdon:
+            plt.show()
