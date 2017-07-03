@@ -2,7 +2,7 @@ import numpy as np
 
 """
 Reference
-http://jmlr.org/proceedings/papers/v9/glorot10a.pdf
+http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf
 """
 
 def normal(shape, scale=0.5):
