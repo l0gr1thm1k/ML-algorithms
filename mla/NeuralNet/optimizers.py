@@ -66,3 +66,60 @@ class Optimizer(object):
         Must be called before the optimization step
         """
         raise NotImplementedError
+
+
+class SGD(Optimizer):
+
+    def __init__(self, learning_rate=0.01, momentum=0.9, decay=0, nesterov=False):
+        self.nesterov = nesterov
+        self.lr = learning_rate
+        self.decay = decay
+        self.momentum = momentum
+        self.iteration = 0
+        self.velocity = None
+
+    def update(self, network):
+        lr = self.lr * (1.0 / (1.0 + self.decay * self.iteration))
+
+        for i, layer in enumerate(network.parametric_layers):
+            for n in layer.parameters.keys():
+                #  Get gradient values
+                grad = layer.parameters.grad[n]
+                update = self.momentum * self.velocity[i][n] - lr * grad
+                self.velocity[i][n] = update
+                if self.nesterov:
+                    # adjust using updated velocity
+                    update = self.momentum * self.velocity[i][n] - lr * grad
+                layer.parameters.step(n, update)
+        self.iteration += 1
+
+    def setup(self, network):
+        # Accumulators
+        self.accu = defaultdict(dict)
+        for i, layer in enumerate(network.parametric_layers):
+            for n in layer.parameters.keys():
+                self.accu[i][n] = np.zeros_like(layer.parameters[n])
+
+
+class Adagrad(Optimizer):
+
+    def __init__(self, learning_rate=0.01, rho=0.95, epsilon=1e-8):
+        self.lr = learning_rate
+        self.rho = rho
+        self.eps = epsilon
+
+    def update(self, network):
+        for i, layer in enumerate(network.parametric_layers):
+            for n in layer.parameters.keys():
+                grad = layer.parameters.grad[n]
+                self.accu[i][n] += grad ** 2
+                step = self.lr * grad / (np.sqrt(self.accu[i][n] + self.eps))
+                layer.parameters.step(n, -step)
+
+    def setup(self, network):
+        # Accumulators
+        self.accu = defaultdict(dict)
+        for i, layer in enumerate(network.parametric_layers):
+            for n in layer.parameters.keys():
+                self.accu[i][n] = np.zeros_like(layer.parameters[n])
+
