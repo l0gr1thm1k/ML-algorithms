@@ -123,3 +123,30 @@ class Adagrad(Optimizer):
             for n in layer.parameters.keys():
                 self.accu[i][n] = np.zeros_like(layer.parameters[n])
 
+
+class Adadelta(Optimizer):
+
+    def __init__(self, learning_rate=1.0, rho=0.95, epsilon=1e-8):
+        self.rho = rho
+        self.eps = epsilon
+        self.lr = learning_rate
+
+    def update(self, network):
+        for i, layer in enumerate(network.parametric_layers):
+            for n in layer.parameters.keys():
+                grad = layer.parameters.grad[n]
+                self.accu[i][n] = self.rho * self.accu[i][n] + (1.0 - self.rho) * grad ** 2
+                step = grad * np.sqrt(self.d_accu[i][n] + self.eps) / np.sqrt(self.accu[i][n] + self.eps)
+
+                layer.parameters.step(n, -step * self.lr)
+                # Update delta accumulator
+                self.d_accu[i][n] = self.rho * self.d_accu[i][n] + (1.0 - self.rho) * step ** 2
+
+    def setup(self, network):
+        # Accumulators
+        self.accu = defaultdict(dict)
+        self.d_accu = defaultdict(dict)
+        for i, layer in enumerate(network.parametric_layers):
+            for n in layer.parameters.keys():
+                self.accu[i][n] = np.zeros_like(layer.parameters[n])
+                self.d_accu[i][n] = np.zeros_like(layer.parameters[n])
