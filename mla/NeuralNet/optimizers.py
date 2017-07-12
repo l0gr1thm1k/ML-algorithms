@@ -150,3 +150,58 @@ class Adadelta(Optimizer):
             for n in layer.parameters.keys():
                 self.accu[i][n] = np.zeros_like(layer.parameters[n])
                 self.d_accu[i][n] = np.zeros_like(layer.parameters[n])
+
+
+class RMSProp(Optimizer):
+
+    def __init__(self, learning_rate=0.001, rho=0.9, epsilon=1e-8):
+        self.lr = learning_rate
+        self.rho = rho
+        self.eps = epsilon
+
+    def update(self, network):
+        for i, layer in enumerate(network.parametric_layers):
+            for n in layer.parameters.keys():
+                grad = layer.parameters.grad[n]
+                self.accu[i][n] = (self.rho * self.accu[i][n]) + (1.0 - self.rho) * (grad ** 2)
+                step = self.lr * grad / (np.sqrt(self.accu[i][n]) + self.eps)
+                layer.parameters.step(n, -step)
+
+    def setup(self, network):
+        # Accumulators
+        self.accu = defaultdict(dict)
+        for i, layer in enumerate(network.parametric_layers):
+            for n in layer.parameters.keys():
+                self.accu[i][n] = np.zeros_like(layer.parameters[n])
+
+
+class Adam(Optimizer):
+
+    def __init__(self, learning_rate=0.01, beta_1=0.99, beta_2=0.999, epsilon=1e-8):
+        self.iterations = 0
+        self.t = 0
+        self.lr = learning_rate
+        self.beta_1 = beta_1
+        self.beta_2 = beta_2
+        self.eps = epsilon
+
+    def update(self, network):
+        for i, layer in enumerate(network.parametric_layers):
+            for n in layer.parameters.keys():
+                grad = layer.parameters.grad[n]
+                self.ms[i][n] = (self.beta_1 * self.ms[i][n]) + (1.0 - self.beta_1) * grad
+                self.vs[i][n] = (self.beta_2 * self.vs[i][n]) + (1.0 - self.beta_2) * grad ** 2
+                lr = self.lr * np.sqrt(1.0 - self.beta_2 ** self.t) / (1.0 - self.beta_1 ** self.t)
+
+                step = lr * self.ms[i][n] / (np.sqrt(self.vs[i][n]) + self.eps)
+                layer.parameters.step(n, -step)
+        self.t += 1
+
+    def setup(self, network):
+        # Accumulators
+        self.ms = defaultdict(dict)
+        self.vs = defaultdict(dict)
+        for i, layer in enumerate(network.parametric_layers):
+            for n in layer.parameters.keys():
+                self.ms[i][n] = np.zeros_like(layer.parameters[n])
+                self.vs[i][n] = np.zeros_like(layer.parameters[n])
