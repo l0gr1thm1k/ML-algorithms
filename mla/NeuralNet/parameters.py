@@ -2,7 +2,7 @@ import numpy as np
 
 from mla.NeuralNet.initializations import get_initializer
 
-class Parameter(object):
+class Parameters(object):
 
     def __init__(self, init='glorot_uniform', scale=0.5, bias=1.0, regularizers=None, constraints=None):
         """
