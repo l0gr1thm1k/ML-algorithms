@@ -131,3 +131,48 @@ class Dropout(Layer, PhaseMixin):
 
     def shape(self, x_shape):
         return x_shape
+
+
+class TimeStepSlicer(Layer):
+    """Take a specific time step from a 3D tensor."""
+
+    def __init__(self, step=-1):
+        self.step = step
+
+    def forward_pass(self, x):
+        return x[:, self.step, :]
+
+    def backward_pass(self, delta):
+        return np.repeat(delta[:, np.newaxis, :], 2, 1)
+
+    def shape(self, x_shape):
+        return x_shape[0], x_shape[2]
+
+
+class TimeDistributedDense(Layer):
+    """Apply regular Dense layer to every time step."""
+
+    def __init__(self, output_dim):
+        self.output_dim = output_dim
+        self.n_time_steps = None
+        self.Dense = None
+        self.input_dim = None
+
+    def setup(self, x_shape):
+        self.dense = Dense(self.output_dim)
+        self.dense.setup(x_shape[0], x_shape[2])
+        self.input_dim = x_shape[2]
+
+    def forward_pass(self, x):
+        n_timesteps = x.shape[1]
+        x = x.reshape(-1, x.shape[-1])
+        y = self.Dense.forward_pass(x)
+        y = y.reshape((-1, n_timesteps, self.input_dim))
+        return y
+
+    @property
+    def parameters(self):
+        return self.dense._params
+
+    def shape(self, x_shape):
+        return x_shape[0], x_shape[1], self.output_dim
